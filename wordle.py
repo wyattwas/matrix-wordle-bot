@@ -6,11 +6,13 @@ import re
 from datetime import datetime
 from nio import MatrixRoom, RoomMessageText, AsyncClient
 
+from db import register_player_if_not_already
+
 
 async def wordle_command(room: MatrixRoom, event: RoomMessageText, client: AsyncClient, sql_cursor: Cursor) -> None:
     if event.body.startswith("!wordle"):
         if "start" in event.body:
-            await start(room, event, client)
+            await start(room, event, client, sql_cursor)
 
         if "guess" in event.body:
             await guess(room, event, client, sql_cursor)
@@ -19,7 +21,9 @@ async def wordle_command(room: MatrixRoom, event: RoomMessageText, client: Async
             await date(room, event, client)
 
 
-async def start(room, event, client):
+async def start(room: MatrixRoom, event: RoomMessageText, client: AsyncClient, sql_cursor: Cursor) -> None:
+    register_player_if_not_already(event.sender, sql_cursor)
+
     await client.room_send(
         room_id=room.room_id,
         message_type="m.room.message",
@@ -37,7 +41,9 @@ async def start(room, event, client):
         }
     )
 
-async def guess(room, event, client, sql_cursor):
+async def guess(room: MatrixRoom, event: RoomMessageText, client: AsyncClient, sql_cursor: Cursor) -> None:
+    register_player_if_not_already(event.sender, sql_cursor)
+
     user_id = event.sender
     date = datetime.today().strftime('%Y-%m-%d')
     wordle_json = requests.get(f"https://www.nytimes.com/svc/wordle/v2/{date}.json").json()
@@ -92,7 +98,7 @@ async def guess(room, event, client, sql_cursor):
         else:
             chart += "⬛"
 
-    sql_cursor.execute(f'SELECT max("index") FROM guess WHERE date="{date}" AND user_id="{user_id}"')
+    sql_cursor.execute('SELECT max("index") FROM guess WHERE date=? AND user_id=?', (date, user_id))
     current_index = sql_cursor.fetchone()
     current_index = current_index[0]
 
@@ -180,7 +186,7 @@ async def guess(room, event, client, sql_cursor):
             }
         )
 
-async def date(room, event, client):
+async def date(room: MatrixRoom, event: RoomMessageText, client: AsyncClient) -> None:
     date = event.body.split(" ")[2]
     r = re.compile('\\d{4}-\\d{2}-\\d{2}')
 

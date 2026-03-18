@@ -6,6 +6,7 @@ from nio import AsyncClient, MatrixRoom, RoomMessageText, InviteEvent, AsyncClie
 
 import db
 from invite_event import invites
+from score import score
 from wordle import wordle_command
 
 async def message_callback(room: MatrixRoom, event: RoomMessageText) -> None:
@@ -34,6 +35,10 @@ client.add_event_callback(
 client.add_event_callback(
     lambda room, event: invites(client, room, event),
     InviteEvent
+)
+client.add_event_callback(
+    lambda room, event: score(room, event, client, sql_cursor),
+    RoomMessageText
 )
 sql_cursor = db.setup()
 
