@@ -28,7 +28,7 @@ user_name = os.getenv("USER_NAME") or ""
 client = AsyncClient(homeserver=home_server, user=user_name, config=AsyncClientConfig(store_sync_tokens=True))
 client.add_event_callback(message_callback, RoomMessageText)
 client.add_event_callback(
-    lambda room, event: wordle_command(client, sql_cursor, room, event),
+    lambda room, event: wordle_command(room, event, client, sql_cursor),
     RoomMessageText
 )
 client.add_event_callback(
