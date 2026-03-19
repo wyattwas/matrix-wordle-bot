@@ -6,7 +6,7 @@ import re
 from datetime import datetime
 from nio import MatrixRoom, RoomMessageText, AsyncClient
 
-from db import register_player_if_not_already
+from db import register_player_if_not_already, get_all_guesses_for_user, execute_and_commit
 
 
 async def wordle_command(room: MatrixRoom, event: RoomMessageText, client: AsyncClient, sql_cursor: Cursor) -> None:
@@ -48,7 +48,6 @@ async def guess(room: MatrixRoom, event: RoomMessageText, client: AsyncClient, s
     date = datetime.today().strftime('%Y-%m-%d')
     wordle_json = requests.get(f"https://www.nytimes.com/svc/wordle/v2/{date}.json").json()
     wordle = wordle_json["solution"]
-    chart = ""
 
     if len(event.body.split(" ")) < 3:
         await client.room_send(
@@ -90,17 +89,9 @@ async def guess(room: MatrixRoom, event: RoomMessageText, client: AsyncClient, s
         )
         return
 
-    for index, letter in enumerate(guess):
-        if letter == wordle[index]:
-            chart += "🟩"
-        elif letter in wordle:
-            chart += "🟨"
-        else:
-            chart += "⬛"
-
     sql_cursor.execute('SELECT max("index") FROM guess WHERE date=? AND user_id=?', (date, user_id))
-    current_index = sql_cursor.fetchone()
-    current_index = current_index[0]
+    current_index = sql_cursor.fetchone()[0]
+    print(f'Current Index: {current_index}')
 
     if current_index == 5:
         await client.room_send(
@@ -142,10 +133,13 @@ async def guess(room: MatrixRoom, event: RoomMessageText, client: AsyncClient, s
         points = 10
 
     if wordle == guess:
-        sql_cursor.execute(
+        execute_and_commit(
+            sql_cursor,
             'INSERT INTO guess (date, "index", word, points, correct, user_id) VALUES(?, ?, ?, ?, ?, ?)',
             (date, current_index, guess, points, 1, user_id)
         )
+
+        chart = build_guesses_chart(get_all_guesses_for_user(user_id, sql_cursor))
 
         await client.room_send(
             room_id=room.room_id,
@@ -164,10 +158,13 @@ async def guess(room: MatrixRoom, event: RoomMessageText, client: AsyncClient, s
             }
         )
     else:
-        sql_cursor.execute(
+        execute_and_commit(
+            sql_cursor,
             'INSERT INTO guess (date, "index", word, points, correct, user_id) VALUES(?, ?, ?, ?, ?, ?)',
-            (date, current_index, guess, points, 0, user_id)
+            (date, current_index, guess, 0, 0, user_id)
         )
+
+        chart = build_guesses_chart(get_all_guesses_for_user(user_id, sql_cursor))
 
         await client.room_send(
             room_id=room.room_id,
@@ -268,3 +265,20 @@ async def date(room: MatrixRoom, event: RoomMessageText, client: AsyncClient) ->
             }
         }
     )
+
+def build_guesses_chart(guesses: list) -> str:
+    chart = ""
+    guesses.sort(key=lambda guess: guess.index)
+    print(guesses)
+
+    for guess in guesses:
+        for index, letter in enumerate(guess):
+            if letter == guess.word:
+                chart += "🟩"
+            elif letter in guess.word:
+                chart += "🟨"
+            else:
+                chart += "⬛"
+        chart += "\n"
+
+    return chart

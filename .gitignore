@@ -2,3 +2,4 @@
 .env.old
 .idea
 wordle.sqlite
+wordle.sqlite-journal
