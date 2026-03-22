@@ -2,3 +2,6 @@
 .idea
 wordle.sqlite
 wordle.sqlite-journal
+dist
+build
+main.spec
