@@ -7,9 +7,10 @@ async def help_command(room: MatrixRoom, event: RoomMessageText, client: AsyncCl
                         f"I am the Wordle bot, obviously you can play Wordle with me.<br>"
                         f"You can use the following commands:<br>"
                         f"<strong data-md=\"**\">start:</strong> register for the game<br>"
-                        f"<strong data-md=\"**\">guess:</strong> take a guess at what today's Wordle might be<br>"
+                        f"<strong data-md=\"**\">guess:</strong> get a overview of your guesses of today<br>"
+                        f"<strong data-md=\"**\">guess <word>:</strong> take a guess at what today's Wordle might be<br>"
                         f"<strong data-md=\"**\">score:</strong> get a overview of the players scores<br>"
-                        f"<strong data-md=\"**\">date:</strong> get the Wordle for a specific date<br>"
+                        f"<strong data-md=\"**\">date <yyyy-mm-dd>:</strong> get the Wordle for a specific date<br>"
                         f"Example: !wordle start")
 
         await client.room_send(

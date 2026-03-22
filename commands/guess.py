@@ -27,7 +27,7 @@ async def guess(room: MatrixRoom, event: RoomMessageText, client: AsyncClient, s
             message_type="m.room.message",
             content={
                 "msgtype": "m.text",
-                "body": "You didn't guess anything silly",
+                "body": build_guesses_chart(sender.get_all_guesses_for_today(session), wordle),
                 "m.relates_to": {
                     "rel_type": "m.thread",
                     "event_id": event.event_id,
