@@ -75,7 +75,9 @@ async def date(room: MatrixRoom, event: RoomMessageText, client: AsyncClient) ->
         message_type="m.room.message",
         content={
             "msgtype": "m.text",
-            "body": f"The wordle of that day was: ||{wordle}||",
+            "body": f"The wordle of that day was: || {wordle} ||",
+            "format": "org.matrix.custom.html",
+            "formatted_body": f'The wordle of that day was: <span data-md="||" data-mx-spoiler>{wordle}</span>',
             "m.relates_to": {
                 "rel_type": "m.thread",
                 "event_id": event.event_id,
