@@ -4,7 +4,7 @@ from typing import List
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import Session
 
-from db.database import Base, SessionLocal
+from db.database import Base
 from db.guess import Guess
 
 

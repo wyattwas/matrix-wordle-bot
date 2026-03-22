@@ -1,7 +1,7 @@
 from sqlalchemy import Integer, Column, Date, String, Boolean
 from sqlalchemy.orm import Session
 
-from db.database import Base, SessionLocal
+from db.database import Base
 
 
 class Guess(Base):
