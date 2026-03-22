@@ -4,9 +4,11 @@ import os
 from dotenv import load_dotenv
 from nio import AsyncClient, MatrixRoom, RoomMessageText, InviteEvent, AsyncClientConfig
 
-import db
-from invite_event import invites
-from score import score
+import db.database as db
+
+from commands.invite_event import invites
+from commands.score import score
+from db.database import SessionLocal
 from wordle import wordle_command
 
 async def message_callback(room: MatrixRoom, event: RoomMessageText) -> None:
@@ -28,18 +30,19 @@ user_name = os.getenv("USER_NAME") or ""
 
 client = AsyncClient(homeserver=home_server, user=user_name, config=AsyncClientConfig(store_sync_tokens=True))
 client.add_event_callback(message_callback, RoomMessageText)
-client.add_event_callback(
-    lambda room, event: wordle_command(room, event, client, sql_cursor),
-    RoomMessageText
-)
-client.add_event_callback(
-    lambda room, event: invites(client, room, event),
-    InviteEvent
-)
-client.add_event_callback(
-    lambda room, event: score(room, event, client, sql_cursor),
-    RoomMessageText
-)
-sql_cursor = db.setup()
+with SessionLocal() as session:
+    client.add_event_callback(
+        lambda room, event: wordle_command(room, event, client, session),
+        RoomMessageText
+    )
+    client.add_event_callback(
+        lambda room, event: invites(room, event, client),
+        InviteEvent
+    )
+    client.add_event_callback(
+        lambda room, event: score(room, event, client, session),
+        RoomMessageText
+    )
+db.setup()
 
 asyncio.run(main())

@@ -1,14 +1,15 @@
-from sqlite3 import Cursor
-
 from nio import MatrixRoom, RoomMessageText, AsyncClient
+from sqlalchemy.orm import Session
+
+from db.database import SessionLocal
+from db.user import User
 
 
-async def score(room: MatrixRoom, event: RoomMessageText, client: AsyncClient, sql_cursor: Cursor) -> None:
+async def score(room: MatrixRoom, event: RoomMessageText, client: AsyncClient, session: Session) -> None:
     if event.body.startswith("!wordle") and "score" in event.body:
-        sql_cursor.execute('SELECT id, score FROM user ORDER BY score DESC')
-        score_board = sql_cursor.fetchall()
+        users = session.query(User).order_by(User.score.desc()).all()
 
-        if not score_board:
+        if users is None:
             await client.room_send(
                 room_id=room.room_id,
                 message_type="m.room.message",
@@ -27,22 +28,22 @@ async def score(room: MatrixRoom, event: RoomMessageText, client: AsyncClient, s
             )
             return
 
-        top_three = score_board[:3]
+        top_three = users[:3]
         lines = ["🏆 Top 3 Players:"]
 
         current_user = None
-        for u in score_board:
-            if u[0] == event.sender:
+        for u in users:
+            if u.id == event.sender:
                 current_user = u
                 break
 
         for i, user in enumerate(top_three, start=1):
-            lines.append(f"{i}. {user[0]} - {user[1]} points")
+            lines.append(f"{i}. {user.id} - {user.score} points")
 
         if current_user and current_user not in top_three:
             lines.append("\nYour position:")
-            rank = score_board.index(current_user) + 1
-            lines.append(f"{rank}. {event.sender[0]} - {event.sender[1]} points")
+            rank = users.index(current_user) + 1
+            lines.append(f"{rank}. {current_user.id} - {current_user.score} points")
 
         message = "\n".join(lines)
 
