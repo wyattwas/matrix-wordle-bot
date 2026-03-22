@@ -67,8 +67,9 @@ async def guess(room: MatrixRoom, event: RoomMessageText, client: AsyncClient, s
         return
 
     guess.index = db.query(func.max(Guess.index)).filter(Guess.user_id == sender.id, Guess.date == date).scalar() or 0
+    already_guessed_it = any(guess.correct for guess in sender.get_all_guesses_for_today(session))
 
-    if guess.index == 5:
+    if guess.index == 5 or already_guessed_it:
         await client.room_send(
             room_id=room.room_id,
             message_type="m.room.message",
