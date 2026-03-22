@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from nio import AsyncClient, MatrixRoom, RoomMessageText, InviteEvent, AsyncClientConfig
 
 import db.database as db
+from commands.help import help_command
 
 from commands.invite_event import invites
 from commands.score import score
@@ -41,6 +42,10 @@ with SessionLocal() as session:
     )
     client.add_event_callback(
         lambda room, event: score(room, event, client, session),
+        RoomMessageText
+    )
+    client.add_event_callback(
+        lambda room, event: help_command(room, event, client),
         RoomMessageText
     )
 db.setup()
