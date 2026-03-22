@@ -31,24 +31,20 @@ async def score(room: MatrixRoom, event: RoomMessageText, client: AsyncClient, s
         lines_body = ["🏆 Top 3 Players:"]
         lines_formatted_body = ["🏆 Top 3 Players:"]
 
-        current_user = None
-        for u in users:
-            if u.id == event.sender:
-                current_user = u
-                break
+        current_user = next((u for u in users if u.id == event.sender), None)
 
         for i, user in enumerate(top_three, start=1):
-            lines_body.append(f"{i}. {user.name} - {user.score} points")
+            lines_body.append(f"{i}. {user.id} - {user.score} points")
             lines_formatted_body.append(
-                f"{i}. <a href=\"https://matrix.to/#/{user.id}\"{user.name}</a> - {user.score} points")
+                f'{i}. <a href="https://matrix.to/#/{user.id}">{user.name}</a> - {user.score} points')
 
         if current_user and current_user not in top_three:
             lines_body.append("\nYour position:")
             lines_formatted_body.append("<br>Your position:")
             rank = users.index(current_user) + 1
-            lines_body.append(f"{rank}. {current_user.name} - {current_user.score} points")
+            lines_body.append(f"{rank}. {current_user.id} - {current_user.score} points")
             lines_formatted_body.append(
-                f"{rank}. <a href=\"https://matrix.to/#/{current_user.id}\"{current_user.name}</a> - {current_user.score} points")
+                f'{rank}. <a href="https://matrix.to/#/{current_user.id}">{current_user.name}</a> - {current_user.score} points')
 
         body = "\n".join(lines_body)
         formatted_body = "<br>".join(lines_formatted_body)
