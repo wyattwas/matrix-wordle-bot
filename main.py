@@ -1,5 +1,6 @@
 import asyncio
 import os
+from multiprocessing.spawn import old_main_modules
 
 from dotenv import load_dotenv
 from nio import AsyncClient, MatrixRoom, RoomMessageText, InviteEvent, AsyncClientConfig
@@ -9,7 +10,9 @@ from commands.help import help_command
 
 from commands.invite_event import invites
 from commands.score import score
+from db import token
 from db.database import SessionLocal
+from db.token import Token
 from wordle import wordle_command
 
 async def message_callback(room: MatrixRoom, event: RoomMessageText) -> None:
@@ -22,7 +25,9 @@ async def main() -> None:
     print(await client.login(password))
     await client.join("!siypcvZvJjaxckwixG:matrix.opencodespace.org")
     await client.set_presence("online", "Wanna try guessing today's wordle?")
-    await client.sync_forever()
+    client.config = AsyncClientConfig(store_sync_tokens=True)
+    old_token = session.query(Token).scalar()
+    await client.sync_forever(since=old_token.id if old_token else None)
 
 load_dotenv()
 password = os.getenv("PASSWORD") or ""
@@ -50,4 +55,15 @@ with SessionLocal() as session:
     )
 db.setup()
 
-asyncio.run(main())
+try:
+    asyncio.run(main())
+except KeyboardInterrupt:
+    print("Shutting down")
+finally:
+    if client.next_batch:
+        print(f"Saving token: {client.next_batch}")
+        with SessionLocal() as session:
+            token.create(client.next_batch, session)
+    else:
+        print("Could not save token")
+    asyncio.run(client.close())
