@@ -1,0 +1,10 @@
+version: '1.0'
+
+services:
+  wordle:
+    image: wordle:latest
+    environment:
+      USER_NAME:
+      PASSWORD:
+      HOME_SERVER:
+      DB_URL:
