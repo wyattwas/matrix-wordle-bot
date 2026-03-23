@@ -21,7 +21,6 @@ multidict==6.7.1
 packaging==26.0
 propcache==0.4.1
 pycryptodome==3.23.0
-pyinstaller==6.19.0
 pyinstaller-hooks-contrib==2026.3
 python-dotenv==1.2.2
 python-socks==2.8.1
