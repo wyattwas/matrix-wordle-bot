@@ -5,3 +5,4 @@ wordle.sqlite-journal
 dist
 build
 main.spec
+docker-compose.yml
