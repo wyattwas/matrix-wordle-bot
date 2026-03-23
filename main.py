@@ -1,6 +1,6 @@
 import asyncio
+import logging
 import os
-from multiprocessing.spawn import old_main_modules
 
 from dotenv import load_dotenv
 from nio import AsyncClient, MatrixRoom, RoomMessageText, InviteEvent, AsyncClientConfig
@@ -16,13 +16,12 @@ from db.token import Token
 from wordle import wordle_command
 
 async def message_callback(room: MatrixRoom, event: RoomMessageText) -> None:
-    print(
-        f"Message received in room {room.display_name}\n"
-        f"{room.user_name(event.sender)} | {event.body}"
-    )
+    Logger.info("Message received: room: %s; user: %s\nmessage: %s", room.display_name, event.sender, event.body)
 
 async def main() -> None:
-    print(await client.login(password))
+    logging.basicConfig(filename='wordle.log', level=logging.INFO)
+    Logger.info("Starting wordle game")
+    Logger.info(await client.login(password))
     await client.join("!siypcvZvJjaxckwixG:matrix.opencodespace.org")
     await client.set_presence("online", "Wanna try guessing today's wordle?")
     client.config = AsyncClientConfig(store_sync_tokens=True)
@@ -33,6 +32,8 @@ load_dotenv()
 password = os.getenv("PASSWORD") or ""
 home_server = os.getenv("HOME_SERVER") or "https://matrix.org"
 user_name = os.getenv("USER_NAME") or ""
+
+Logger = logging.getLogger(__name__)
 
 client = AsyncClient(homeserver=home_server, user=user_name, config=AsyncClientConfig(store_sync_tokens=True))
 client.add_event_callback(message_callback, RoomMessageText)
